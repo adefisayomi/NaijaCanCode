@@ -1,15 +1,10 @@
-import type { ActionFunction, ActionFunctionArgs, LoaderFunction, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { redirect, useActionData, useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { ArrowLeft } from "lucide-react";
-import { useEffect } from "react";
-import { toast } from "sonner";
 import { authenticator } from "~/.server/authServices";
-import { createAccount, getAccount } from "~/.server/controllers";
-import { type IAccount } from "~/.server/schemas/account";
 import { sessionStorage } from "~/.server/sessions";
 import Logo from "~/components/Logo";
 import { Button } from "~/components/ui/button";
-import { errorMessage } from "~/src/constants";
 import SignupForm from "~/src/sections/auth/SignupForm";
 
 export const meta: MetaFunction = () => [
@@ -18,25 +13,29 @@ export const meta: MetaFunction = () => [
   ];
 
 export async function action({ request }: ActionFunctionArgs) {
-    let account = await authenticator.authenticate("signin", request);
+    let account = await authenticator.authenticate("signin-form", request);
     if (!account.success) {
-      return ({message: account.message})
+      return {account}
     }
   
     let session = await sessionStorage.getSession(request.headers.get("cookie"));
     session.set("account", account);
   
-    throw redirect("/", {
+    const username = account.data.username
+    return redirect(`/${username}/code`, {
       headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
   
-  // Finally, we need to export a loader function to check if the user is already
-  // authenticated and redirect them to the dashboard
+
   export async function loader({ request }: LoaderFunctionArgs) {
+
     let session = await sessionStorage.getSession(request.headers.get("cookie"));
     let account = session.get("account");
-    if (account) throw redirect("/");
+    if (account && account.success && account.data) {
+      const username = account.data.username || account.data.id
+      return redirect(`/${username}/code`);
+    }
     return {account};
   }
 

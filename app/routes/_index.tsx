@@ -1,9 +1,10 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, redirect, useLoaderData } from "@remix-run/react";
+import { toast } from "sonner";
 import { authenticator } from "~/.server/authServices";
 import { deployCode } from "~/.server/controllers/deployToGit";
 import { sessionStorage } from "~/.server/sessions";
-import LogoutButton from "~/components/LogoutButton";
+import LogoutButton from "~/components/AuthButton";
 
 export const meta: MetaFunction = () => [
   { title: "User Management App" },
@@ -27,21 +28,24 @@ export async function action({ request }: ActionFunctionArgs) {
 // }
 
 
-// export async function loader({ request }: LoaderFunctionArgs) {
-//   let session = await sessionStorage.getSession(request.headers.get("cookie"));
-//   let account = session.get("account");
-//   return {account};
-// }
+export async function loader({ request }: LoaderFunctionArgs) {
+  let session = await sessionStorage.getSession(request.headers.get("cookie"));
+  let account = session.get("account");
+  return {account};
+}
 
 export default function Index() {
 
-  // const data = useLoaderData<typeof loader>()
+  const data = useLoaderData<typeof loader>()?.account
   // console.log(data)
 
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-6">
       <p className='para'>
         This a paragraph
+
+        <button onClick={() => toast.error('This is allert')} >Alert</button>
+        <LogoutButton account={data} />
       </p>
     </div>
   );

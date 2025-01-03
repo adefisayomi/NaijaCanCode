@@ -2,14 +2,35 @@ import { errorMessage } from "~/src/constants";
 import { User } from "../schemas/user";
 import argon from "argon2";
 import isEmail from "email-validator";
+import { v4 as uuidv4 } from "uuid";
 
 
-async function createUser(label: "email" | "username", id: string, password: string) {
+async function createUser(
+    label: "email" | "username",
+    id: string,
+    password: string,
+    username?: string
+) {
     const hashedPassword = await argon.hash(password);
-    const newUser = new User({ [label]: id, password: hashedPassword });
+
+    // If no username is provided, generate one based on the email
+    if (!username && label === "email") {
+        username = await generateUniqueUsername(id);
+    }
+
+    // Create the new user object
+    const newUser = new User({
+        [label]: id,
+        username,
+        password: hashedPassword,
+    });
+
+    // Save the user to the database
     await newUser.save();
+
     return newUser;
 }
+
 
 export async function signinUser(id: string, password: string) {
     try {
@@ -22,7 +43,8 @@ export async function signinUser(id: string, password: string) {
         let user = await User.findOne({ [label]: id });
         if (!user) {
             // If user doesn't exist, create a new one
-            user = await createUser(label, id, password);
+            const newUsername = label === "email" ? await generateUniqueUsername(id) : id;
+            user = await createUser(label, id, password, newUsername);
         }
 
         // Verify the password
@@ -34,15 +56,30 @@ export async function signinUser(id: string, password: string) {
             success: true,
             message: "Signed in successfully.",
             data: {
-                [label]: user[label],
+                username: user.username,
                 id: user._id,
                 name: user.name,
+                email: user.email
             },
         };
     } catch (err: any) {
         return errorMessage(err.message || "An unknown error occurred.");
     }
 }
+
+// Function to generate a unique username
+async function generateUniqueUsername(email: string): Promise<string> {
+    let username = email.split("@")[0]; // Extract the part before the '@' in the email
+    let uniqueUsername = username;
+
+    while (await User.findOne({ username: uniqueUsername })) {
+        // Append a short UUID segment to ensure uniqueness
+        uniqueUsername = `${username}-${uuidv4().split("-")[0]}`;
+    }
+
+    return uniqueUsername;
+}
+
 
 
 // export async function createUser(id: string, password: string) {
@@ -83,9 +120,10 @@ export async function getUser(id: string) {
             success: true,
             message: null,
             data: {
-                [label]: user[label],
+                username: user.username,
                 id: user._id,
                 name: user.name,
+                email: user.email
             },
         };
     } catch (err: any) {
@@ -129,10 +167,10 @@ export async function updateUser(id: string, payload: Partial<{ email: string; u
             success: true,
             message: "User updated successfully!",
             data: {
-                id: user._id,
-                email: user.email,
                 username: user.username,
+                id: user._id,
                 name: user.name,
+                email: user.email
             },
         };
     } catch (err: any) {

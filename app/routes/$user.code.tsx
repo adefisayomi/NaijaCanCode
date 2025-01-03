@@ -18,6 +18,15 @@ import {
   } from "~/components/ui/resizable";
 import { useTheme } from "remix-themes"
 import DOMPurify from 'dompurify';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+  } from "~/components/ui/select"
 
 
 
@@ -43,6 +52,7 @@ export default function Code () {
 
    
     const data = useLoaderData<typeof loader>().data.code
+    const [jsType, setJsType] = useState("javascript")
     const [code, setCode] = useState(data as {js: string, html: string, css: string})
     const [activePanel, setActivePanel] = useState<keyof typeof code>("html");
     const [isDocumentReady, setIsDocumentReady] = useState(false);
@@ -97,13 +107,81 @@ export default function Code () {
                             </div>
                             ) : (
                             <TabsContent key={activePanel} value={activePanel} className="h-full">
+                                {
+                                    activePanel === 'js' && (
+                                        <Select onValueChange={setJsType} defaultValue={jsType}>
+                                            <SelectTrigger className="p-2 mb-2 w-fit ml-6 text-xs">
+                                            <SelectValue placeholder="Js / TS" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                            <SelectGroup>
+                                                <SelectItem className='text-xs uppercase' value="javascript">JS</SelectItem>
+                                                <SelectItem className='text-xs uppercase' value="typescript">TS</SelectItem>
+                                            </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    )
+                                }
                                 <Editor
-                                    language={activePanel}
+                                    language={activePanel === 'js' ? jsType : activePanel}
                                     value={code[activePanel]}
                                     onChange={handleSetCode}
                                     className="h-full"
-                                    theme={ theme === 'dark' ? "vs-dark" : 'light'}
+                                    theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+                                    options={{
+                                        // Basic Editor Options
+                                        tabSize: 4, // Default tab size
+                                        insertSpaces: true, // Insert spaces when pressing Tab
+                                        wordWrap: 'on', // Enable word wrapping
+                                        autoIndent: 'advanced', // Enable advanced auto-indentation
+                                        formatOnType: true, // Automatically format on typing
+                                        formatOnPaste: true, // Automatically format on paste
+
+                                        // IntelliSense and Code Assistance
+                                        suggestOnTriggerCharacters: true, // Show suggestions when typing trigger characters
+                                        acceptSuggestionOnEnter: 'on', // Accept suggestions on Enter
+                                        quickSuggestions: { other: true, comments: true, strings: true }, // Enable inline suggestions
+                                        quickSuggestionsDelay: 100, // Delay for quick suggestions in ms
+                                        parameterHints: {enabled: true},
+                                        snippetSuggestions: 'top', // Show snippets at the top of suggestions
+                                        autoClosingBrackets: 'always', // Auto-close brackets
+                                        autoClosingQuotes: 'always', // Auto-close quotes
+                                        autoSurround: 'quotes', // Automatically surround with quotes
+
+                                        // Syntax Highlighting
+                                        colorDecorators: true, // Enable color decorators (e.g., for CSS colors)
+                                        renderWhitespace: 'boundary', // Show whitespace at boundaries
+                                        renderControlCharacters: true, // Show control characters
+
+                                        // User Experience
+                                        minimap: { enabled: true }, // Enable minimap
+                                        lineNumbers: 'on', // Show line numbers
+                                        scrollBeyondLastLine: false, // Disable scrolling beyond the last line
+                                        cursorBlinking: 'smooth', // Smooth cursor blinking
+                                        cursorStyle: 'line', // Cursor style
+                                        cursorWidth: 2, // Width of the cursor
+                                        smoothScrolling: true, // Enable smooth scrolling
+
+                                        // Editor Behavior
+                                        mouseWheelZoom: true, // Zoom with mouse wheel
+                                        matchBrackets: 'always', // Highlight matching brackets
+                                        folding: true, // Enable folding
+                                        foldingHighlight: true, // Highlight folded regions
+                                        foldingStrategy: 'auto', // Automatic folding strategy
+
+                                        // Accessibility
+                                        accessibilitySupport: 'on', // Enable accessibility support
+                                        renderLineHighlight: 'all', // Highlight the current line
+                                        overviewRulerBorder: true, // Show a border around the overview ruler
+                                        scrollbar: {
+                                            vertical: 'visible',
+                                            horizontal: 'visible',
+                                            verticalScrollbarSize: 14,
+                                            horizontalScrollbarSize: 14,
+                                        },
+                                    }}
                                 />
+
                             </TabsContent>
                             
                             )}

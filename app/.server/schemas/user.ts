@@ -58,7 +58,7 @@ const userSchema = new Schema<IUser>(
 );
 
 // Adding an index for faster query based on email
-userSchema.index({ email: 1 });
+// userSchema.index({ email: 1 });
 
 // Mongoose Model for User
 export const User : Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', userSchema);

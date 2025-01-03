@@ -1,42 +1,28 @@
-import { Authenticator } from "remix-auth";
+import {Authenticator} from 'remix-auth'
 import { FormStrategy } from "remix-auth-form";
-import { GitHubStrategy } from "remix-auth-github";
-import fetch from "node-fetch";
-import { UserType } from "./schemas/user";
-import { signinUser } from "./controllers";
+import {GitHubStrategy} from 'remix-auth-github'
+import fetch from 'node-fetch';
+import { UserType } from './schemas/user';
+import { signinUser } from './controllers';
 
 type RAccount = {
-  success: boolean;
-  message: string | null;
-  data: UserType | null;
-};
+  success: boolean,
+  message: string | null,
+  data: UserType | any
+}
 
 export let authenticator = new Authenticator<RAccount>();
 
+
 authenticator.use(
   new FormStrategy(async ({ form }) => {
-    const id = form.get("id") as string | undefined;
-    const password = form.get("password") as string | undefined;
-
-    if (!id || !password) {
-      throw new Error("Email/Username and password are required.");
-    }
-
-    // Call the signinUser function
-    const response = await signinUser(id, password);
-
-    if (!response.success) {
-      throw new Error(response.message || "Authentication failed.");
-    }
-
-    // Return the authenticated user data
-    return {
-      success: true,
-      message: "Authentication successful.",
-      data: response.data,
-    };
+    const id = form.get("username") as string
+    const password = form.get("password") as string
+    // 
+    const res = await signinUser(id, password)
+    return res
   }),
-  "signin"
+  "signin-form"
 );
 
 
